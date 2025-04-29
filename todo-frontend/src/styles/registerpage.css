@@ -1,0 +1,88 @@
+#register-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #eef2f5;
+}
+
+.register-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 350px;
+}
+
+.register-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  color: #888;
+  font-size: 18px;
+}
+
+.eye-icon:hover {
+  color: #333;
+}
+
+.register-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.register-button:hover {
+  background-color: #0056b3;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.dropdown-container {
+  margin-bottom: 1.2rem;
+}
+
+.dropdown-select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #333;
+}
