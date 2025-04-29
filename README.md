@@ -1,2 +1,25 @@
-# TODO-APP
-A full-stack TODO application built using Node.js (backend), React.js (frontend), and MySQL (database). This project offers fully furnished features including task creation, updating, deletion, and real-time status management. Designed with a focus on performance, scalability, and a user-friendly interface
+# Todo App
+
+A full-stack Todo application built with **React**, **Node.js**, and **MySQL**.
+
+## Features
+
+- Add, view, and delete todos
+- Add tasks by pressing Enter or clicking a button
+- Full CRUD support using a REST API
+- Data persistence with MySQL
+
+## Tech Stack
+
+- **Frontend**: React.js
+- **Backend**: Node.js, Express
+- **Database**: MySQL
+
+## Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/uday80022/TODO-APP.git
+cd TODO-APP
+```
