@@ -77,7 +77,7 @@ const TaskPage = () => {
 
   const deleteTodo = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/todos/${id}`);
+      await axios.put(`http://localhost:5000/delete/${id}`);
       setTodos(todos.filter((todo) => todo.id !== id));
     } catch (error) {
       console.error("Error deleting todo:", error);

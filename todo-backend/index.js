@@ -16,7 +16,7 @@ app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 
 app.get("/todos", (req, res) => {
-  db.query("SELECT * FROM todo", (err, results) => {
+  db.query("SELECT * FROM todo where is_deleted is false", (err, results) => {
     if (err) {
       console.error("Error fetching todos:", err);
       return res.status(500).send(err);
@@ -66,14 +66,18 @@ app.put("/todos/:id", (req, res) => {
   );
 });
 
-app.delete("/todos/:id", (req, res) => {
+app.put("/delete/:id", (req, res) => {
   const { id } = req.params;
-  db.query("DELETE FROM todo WHERE id = ?", [id], (err, results) => {
-    if (err) {
-      return res.status(500).send(err);
+  db.query(
+    "update todo set is_deleted = 1 WHERE id = ?",
+    [id],
+    (err, results) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.status(204).send();
     }
-    res.status(204).send();
-  });
+  );
 });
 
 app.post("/register", (req, res) => {
