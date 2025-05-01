@@ -15,19 +15,23 @@ const db = mysql.createConnection({
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 
-app.get("/todos", (req, res) => {
-  db.query("SELECT * FROM todo where is_deleted is false", (err, results) => {
-    if (err) {
-      console.error("Error fetching todos:", err);
-      return res.status(500).send(err);
+app.post("/gettodos", (req, res) => {
+  const { id } = req.body;
+  db.query(
+    "SELECT * FROM todo where is_deleted is false and user_id = ?",
+    [id],
+    (err, results) => {
+      if (err) {
+        console.error("Error fetching todos:", err);
+        return res.status(500).send(err);
+      }
+      res.json(results);
     }
-    res.json(results);
-  });
+  );
 });
 
 app.post("/edittask", (req, res) => {
   const { id, task } = req.body;
-  console.log(id, task);
   db.query(
     "UPDATE todo SET task = ? WHERE id = ?",
     [task, id],
@@ -41,14 +45,18 @@ app.post("/edittask", (req, res) => {
   );
 });
 
-app.post("/todos", (req, res) => {
-  const { task } = req.body;
-  db.query("INSERT INTO todo (task) VALUES (?)", [task], (err, results) => {
-    if (err) {
-      return res.status(500).send(err);
+app.post("/addtodo", (req, res) => {
+  const { id, task } = req.body;
+  db.query(
+    "INSERT INTO todo (task,user_id) VALUES (?,?)",
+    [task, id],
+    (err, results) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.status(201).json({ id: results.insertId, task, iscompleted: false });
     }
-    res.status(201).json({ id: results.insertId, task, iscompleted: false });
-  });
+  );
 });
 
 app.put("/todos/:id", (req, res) => {

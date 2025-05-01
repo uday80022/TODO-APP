@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 import "../styles/loginpage.css";
 
@@ -9,6 +10,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useContext(AuthContext);
 
   const navigate = useNavigate();
   const checkLogin = async () => {
@@ -19,6 +21,11 @@ const LoginPage = () => {
       });
       console.log(response.data);
       if (response.data.status) {
+        const userData = {
+          id: response.data.id,
+          username: response.data.username,
+        };
+        login(userData);
         alert("Login successful!");
         navigate("/home");
       } else {
@@ -51,24 +58,27 @@ const LoginPage = () => {
           />
         </div>
         <div className="form-group password-group">
-            <label htmlFor="password" className="form-label">Password:</label>
-            <div className="password-wrapper">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                className="form-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <span
-                className="eye-icon"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
-            </div>
+          <label htmlFor="password" className="form-label">
+            Password:
+          </label>
+          <div className="password-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              className="form-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            
+              required
+            />
+            <span
+              className="eye-icon"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
           </div>
+        </div>
         <button type="submit" className="login-button">
           Login
         </button>

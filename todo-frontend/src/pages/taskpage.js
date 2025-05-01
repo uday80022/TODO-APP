@@ -1,31 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { FaPlus, FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import "../styles/taskpage.css";
+import { AuthContext } from "../context/AuthContext";
 
 const TaskPage = () => {
   const [todos, setTodos] = useState([]);
   const [task, setTask] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editedTask, setEditedTask] = useState("");
-
-  const fetchTodos = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/todos");
-      setTodos(response.data);
-    } catch (error) {
-      console.error("Error fetching todos:", error);
-    }
-  };
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    fetchTodos();
-  }, []);
+    const fetchTodos = async () => {
+      try {
+        const response = await axios.post("http://localhost:5000/gettodos", {
+          id: user.id,
+        });
+        setTodos(response.data);
+      } catch (error) {
+        console.error("Error fetching todos:", error);
+      }
+    };
+
+    if (user?.id) {
+      fetchTodos();
+    }
+  }, [user]);
 
   const addTodo = async () => {
     if (!task) return;
     try {
-      const response = await axios.post("http://localhost:5000/todos", {
+      const response = await axios.post("http://localhost:5000/addtodo", {
+        id: user.id,
         task,
       });
       setTodos([...todos, response.data]);
