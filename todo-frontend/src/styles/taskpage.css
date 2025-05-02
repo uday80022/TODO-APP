@@ -18,6 +18,7 @@
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
+  padding-right: 30px;
 }
 
 .task-input {
@@ -26,6 +27,8 @@
   margin-top: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease;
 }
 
 .add-task-button {
@@ -74,6 +77,7 @@
 .task-actions {
   display: flex;
   gap: 10px;
+  margin-left: 10px;
 }
 
 .task-icon {
@@ -87,4 +91,27 @@
 
 .delete-icon {
   color: #f44336;
+}
+
+.priority-dropdown {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  margin-top: 10px;
+}
+
+.priority-dropdown option {
+  padding: 10px;
+  background-color: #fff;
+  color: #222;
+}
+.priority-dropdown option:hover {
+  background-color: #f0f0f0;
+}
+
+.task-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }

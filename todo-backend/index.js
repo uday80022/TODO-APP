@@ -12,8 +12,8 @@ const db = mysql.createConnection({
   database: "todo_app",
 });
 
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON request bodies
+app.use(cors());
+app.use(express.json());
 
 app.post("/gettodos", (req, res) => {
   const { id } = req.body;
@@ -46,32 +46,67 @@ app.post("/edittask", (req, res) => {
 });
 
 app.post("/addtodo", (req, res) => {
-  const { id, task } = req.body;
+  const { user_id, task, priority } = req.body;
   db.query(
-    "INSERT INTO todo (task,user_id) VALUES (?,?)",
-    [task, id],
+    "INSERT INTO todo (task,user_id,priority) VALUES (?,?,?)",
+    [task, user_id, priority],
     (err, results) => {
       if (err) {
         return res.status(500).send(err);
       }
-      res.status(201).json({ id: results.insertId, task, iscompleted: false });
+      const insertId = results.insertId;
+      db.query(
+        "SELECT * FROM todo WHERE id = ?",
+        [insertId],
+        (err, results) => {
+          if (err) {
+            return res.send(err);
+          }
+          res.send(results[0]);
+        }
+      );
     }
   );
 });
 
-app.put("/todos/:id", (req, res) => {
+app.put("/updatetask/:id", (req, res) => {
   const { id } = req.params;
-  const { iscompleted } = req.body;
-  db.query(
-    "UPDATE todo SET iscompleted = ? WHERE id = ?",
-    [iscompleted, id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
+  if (req.body.iscompleted == false || req.body.iscompleted == true) {
+    db.query(
+      "UPDATE todo SET iscompleted = ? WHERE id = ?",
+      [req.body.iscompleted, id],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send(err);
+        }
+        res.send({ id, iscompleted: req.body.iscompleted });
       }
-      res.send({ id, iscompleted });
-    }
-  );
+    );
+  } else if (req.body.priority) {
+    db.query(
+      "UPDATE todo SET priority = ? WHERE id = ?",
+      [req.body.priority, id],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send(err);
+        }
+        res.send({ id, priority: req.body.priority });
+      }
+    );
+  } else if (req.body.editedTask) {
+    db.query(
+      "UPDATE todo SET task = ? WHERE id = ?",
+      [req.body.editedTask, id],
+      (err, results) => {
+        if (err) {
+          return res.status(500).send(err);
+        }
+        res.send({ id, task: req.body.editedTask, success: true });
+      }
+    );
+  } else {
+    return res.status(400).send("Invalid request body");
+  }
 });
 
 app.put("/delete/:id", (req, res) => {
