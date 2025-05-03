@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { FaPlus, FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import {
+  FaPlus,
+  FaPencilAlt,
+  FaTrashAlt,
+  FaArrowUp,
+  FaArrowDown,
+} from "react-icons/fa";
 import "../styles/taskpage.css";
 import { AuthContext } from "../context/AuthContext";
 
@@ -10,6 +16,7 @@ const TaskPage = () => {
   const [priority, setPriority] = useState("low");
   const [editingId, setEditingId] = useState(null);
   const [editedTask, setEditedTask] = useState("");
+  const [isOrdering, setIsOrdering] = useState(false);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -36,11 +43,12 @@ const TaskPage = () => {
         user_id: user.id,
         task,
         priority,
+        sort_order: todos.length + 1,
       });
       if (response.data.error) {
         console.error("Error adding todo:", response.data.error);
       } else {
-        setTodos([...todos, response.data]);
+        setTodos([...response.data]);
         setTask("");
         setPriority("low");
       }
@@ -102,6 +110,42 @@ const TaskPage = () => {
     }
   };
 
+  const updateOrder = async (id, sort_id, direction) => {
+    try {
+      const filteredTodos = todos.filter((todo) => !todo.is_deleted);
+      const currentIndex = filteredTodos.findIndex((todo) => todo.id === id);
+
+      let swap_index;
+      if (direction === "up" && currentIndex > 0) {
+        swap_index = currentIndex - 1;
+      } else if (
+        direction === "down" &&
+        currentIndex < filteredTodos.length - 1
+      ) {
+        swap_index = currentIndex + 1;
+      } else {
+        alert("Move not possible :already at the edge ");
+        return;
+      }
+      const swap_sort_id = filteredTodos[swap_index].sort_order;
+      const current_sort_id = filteredTodos[currentIndex].sort_order;
+
+      const response = await axios.put(`http://localhost:5000/updateorder`, {
+        id,
+        user_id: user.id,
+        swap_sort_id,
+        current_sort_id,
+      });
+      if (response.data.error) {
+        console.error("Error updating order:", response.data.error);
+      } else {
+        setTodos([...response.data]);
+      }
+    } catch (error) {
+      console.error("Error updating order:", error);
+    }
+  };
+
   const deleteTodo = async (id) => {
     try {
       await axios.put(`http://localhost:5000/delete/${id}`);
@@ -113,7 +157,7 @@ const TaskPage = () => {
 
   return (
     <div className="todo-container">
-      <h1 className="todo-title">To-Do List</h1>
+      <h1 className="todo-title">My Tasks</h1>
       <div className="add-task">
         <button className="add-task-button" onClick={addTodo}>
           <FaPlus /> Add Task
@@ -124,7 +168,7 @@ const TaskPage = () => {
             value={task}
             onChange={(e) => setTask(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addTodo()}
-            placeholder="Type a new task..."
+            placeholder="New task..."
             className="task-input"
           />
           <select
@@ -136,65 +180,90 @@ const TaskPage = () => {
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
+          <button
+            className="ordering-button"
+            onClick={() => setIsOrdering(!isOrdering)}
+          >
+            {isOrdering ? "Stop" : "Order"}
+          </button>
         </div>
       </div>
       <ul className="task-list">
-        {todos.map((todo) => (
-          <li key={todo.id} className="task-item">
-            <input
-              type="checkbox"
-              checked={todo.iscompleted}
-              onChange={() => updateStatus(todo.id, todo.iscompleted)}
-              className="task-checkbox"
-            />
-            {editingId === todo.id ? (
-              <div className="task-input-wrapper">
-                <input
-                  className="task-input"
-                  value={editedTask}
-                  // autoFocus
-                  onChange={(e) => setEditedTask(e.target.value)}
-                  onBlur={() => editTask(todo.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") editTask(todo.id);
-                    if (e.key === "Escape") setEditingId(null);
-                  }}
-                />
-                <select
-                  className="priority-dropdown"
-                  onChange={(e) => changePriority(todo.id, e.target.value)}
-                  value={todo.priority || "low"}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setEditingId(null);
-                  }}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            ) : (
-              <>
-                <span
-                  className={`task-text ${todo.iscompleted ? "completed" : ""}`}
-                >
-                  {todo.task}
-                </span>
-                <span>{todo.priority}</span>
-              </>
-            )}
-            <div className="task-actions">
-              <FaPencilAlt
-                className="task-icon edit-icon"
-                onClick={() => startEditing(todo.id, todo.task)}
+        {todos
+          .filter((todo) => !todo.is_deleted)
+          .map((todo) => (
+            <li key={todo.id} className="task-item">
+              <input
+                type="checkbox"
+                checked={todo.iscompleted}
+                onChange={() => updateStatus(todo.id, todo.iscompleted)}
+                className="task-checkbox"
               />
-              <FaTrashAlt
-                className="task-icon delete-icon"
-                onClick={() => deleteTodo(todo.id)}
-              />
-            </div>
-          </li>
-        ))}
+              {editingId === todo.id ? (
+                <div className="task-input-wrapper">
+                  <input
+                    className="task-input"
+                    value={editedTask}
+                    // autoFocus
+                    onChange={(e) => setEditedTask(e.target.value)}
+                    onBlur={() => editTask(todo.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") editTask(todo.id);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                  />
+                  <select
+                    className="priority-dropdown"
+                    onChange={(e) => changePriority(todo.id, e.target.value)}
+                    value={todo.priority || "low"}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              ) : (
+                <>
+                  <span
+                    className={`task-text ${
+                      todo.iscompleted ? "completed" : ""
+                    }`}
+                  >
+                    {todo.task}
+                  </span>
+                  <span>{todo.priority}</span>
+                </>
+              )}
+              {isOrdering ? (
+                <div className="task-actions">
+                  <FaArrowUp
+                    className="task-icon edit-icon"
+                    onClick={() => updateOrder(todo.id, todo.sort_order, "up")}
+                  />
+                  <FaArrowDown
+                    className="task-icon delete-icon"
+                    onClick={() =>
+                      updateOrder(todo.id, todo.sort_order, "down")
+                    }
+                  />
+                </div>
+              ) : (
+                <div className="task-actions">
+                  <FaPencilAlt
+                    className="task-icon edit-icon"
+                    onClick={() => startEditing(todo.id, todo.task)}
+                  />
+                  <FaTrashAlt
+                    className="task-icon delete-icon"
+                    onClick={() => deleteTodo(todo.id)}
+                  />
+                </div>
+              )}
+            </li>
+          ))}
       </ul>
     </div>
   );

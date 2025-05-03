@@ -18,7 +18,7 @@ app.use(express.json());
 app.post("/gettodos", (req, res) => {
   const { id } = req.body;
   db.query(
-    "SELECT * FROM todo where is_deleted is false and user_id = ?",
+    "SELECT * FROM todo where user_id = ? order by sort_order",
     [id],
     (err, results) => {
       if (err) {
@@ -46,23 +46,23 @@ app.post("/edittask", (req, res) => {
 });
 
 app.post("/addtodo", (req, res) => {
-  const { user_id, task, priority } = req.body;
+  const { user_id, task, priority, sort_order } = req.body;
   db.query(
-    "INSERT INTO todo (task,user_id,priority) VALUES (?,?,?)",
-    [task, user_id, priority],
+    "INSERT INTO todo (task,user_id,priority,sort_order) VALUES (?,?,?,?)",
+    [task, user_id, priority, sort_order],
     (err, results) => {
       if (err) {
         return res.status(500).send(err);
       }
       const insertId = results.insertId;
       db.query(
-        "SELECT * FROM todo WHERE id = ?",
-        [insertId],
+        "SELECT * FROM todo where user_id = ? order by sort_order",
+        [user_id],
         (err, results) => {
           if (err) {
             return res.send(err);
           }
-          res.send(results[0]);
+          res.send(results);
         }
       );
     }
@@ -107,6 +107,38 @@ app.put("/updatetask/:id", (req, res) => {
   } else {
     return res.status(400).send("Invalid request body");
   }
+});
+
+app.put("/updateorder", (req, res) => {
+  const { id, user_id, swap_sort_id, current_sort_id } = req.body;
+  db.query(
+    "UPDATE todo SET sort_order = ? WHERE sort_order = ? and user_id = ?",
+    [current_sort_id, swap_sort_id, user_id],
+    (err, results) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      db.query(
+        "UPDATE todo SET sort_order = ? WHERE id = ? and user_id = ?",
+        [swap_sort_id, id, user_id],
+        (err, results) => {
+          if (err) {
+            return res.status(500).send(err);
+          }
+          db.query(
+            "SELECT * FROM todo where user_id = ? order by sort_order",
+            [user_id],
+            (err, results) => {
+              if (err) {
+                return res.send(err);
+              }
+              res.send(results);
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 app.put("/delete/:id", (req, res) => {
