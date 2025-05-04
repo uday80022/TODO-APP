@@ -155,6 +155,20 @@ app.put("/delete/:id", (req, res) => {
   );
 });
 
+app.put("/restore/:id", (req, res) => {
+  const { id } = req.params;
+  db.query(
+    "update todo set is_deleted = 0 WHERE id = ?",
+    [id],
+    (err, results) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.status(204).send();
+    }
+  );
+});
+
 app.post("/register", (req, res) => {
   const { username, password, role } = req.body;
   db.query(
