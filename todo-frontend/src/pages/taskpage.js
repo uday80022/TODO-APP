@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import "../styles/taskpage.css";
 import { AuthContext } from "../context/AuthContext";
+import { usePopup } from "../context/PopupContext";
 
 const TaskPage = () => {
   const [todos, setTodos] = useState([]);
@@ -18,6 +19,7 @@ const TaskPage = () => {
   const [editedTask, setEditedTask] = useState("");
   const [isOrdering, setIsOrdering] = useState(false);
   const { user } = useContext(AuthContext);
+  const { showPopup } = usePopup();
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -51,6 +53,11 @@ const TaskPage = () => {
         setTodos([...response.data]);
         setTask("");
         setPriority("low");
+        showPopup({
+          message: task + " added successfully!",
+          duration: 3000,
+          type: "success",
+        });
       }
     } catch (error) {
       console.error("Error adding todo:", error);
@@ -149,7 +156,16 @@ const TaskPage = () => {
   const deleteTodo = async (id) => {
     try {
       await axios.put(`http://localhost:5000/delete/${id}`);
-      setTodos(todos.filter((todo) => todo.id !== id));
+      setTodos(
+        todos.map((todo) => {
+          return todo.id === id ? { ...todo, is_deleted: true } : todo;
+        })
+      );
+      showPopup({
+        message: "Task deleted successfully!",
+        duration: 3000,
+        type: "success",
+      });
     } catch (error) {
       console.error("Error deleting todo:", error);
     }
@@ -182,7 +198,16 @@ const TaskPage = () => {
           </select>
           <button
             className="ordering-button"
-            onClick={() => setIsOrdering(!isOrdering)}
+            onClick={() => {
+              setIsOrdering(!isOrdering);
+              showPopup({
+                message: isOrdering
+                  ? "Task ordering mode exited. Changes saved."
+                  : "Task ordering mode activated. Move tasks to reorder.",
+                duration: 3000,
+                type: "info",
+              });
+            }}
           >
             {isOrdering ? "Stop" : "Order"}
           </button>
@@ -234,7 +259,10 @@ const TaskPage = () => {
                   >
                     {todo.task}
                   </span>
-                  <span>{todo.priority}</span>
+                  <span>
+                    {todo.priority.charAt(0).toUpperCase() +
+                      todo.priority.slice(1)}
+                  </span>
                 </>
               )}
               {isOrdering ? (

@@ -76,3 +76,8 @@
 .eye-icon:hover {
   color: #333;
 }
+
+.register-link {
+  text-align: center;
+  margin-top: 1rem;
+}

@@ -1,0 +1,58 @@
+.popup {
+  position: fixed; /* Stay in place during scrolling */
+  top: 12%; /* Position from the bottom */
+  right: 3%; /* Center horizontally */
+  padding: 5px 20px; /* Some padding inside */
+  border-radius: 5px; /* Slightly rounded corners */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000; /* Ensure it's above other elements */
+  font-size: 14px; /* Font size for the text */
+}
+
+.success {
+  background-color: #4caf50;
+  color: white;
+  border: 1px solid #43a047; /* Slightly darker border */
+}
+
+.error {
+  background-color: #f44336;
+  color: white;
+  border: 1px solid #d32f2f;
+}
+
+.warning {
+  background-color: #ff9800;
+  color: white;
+  border: 1px solid #f57c00;
+}
+
+.info {
+  background-color: #2196f3;
+  color: white;
+  border: 1px solid #1976d2;
+}
+
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+.fade-out {
+  animation: fadeOut 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

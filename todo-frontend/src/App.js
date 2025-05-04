@@ -9,10 +9,13 @@ import RegisterPage from "./pages/registerpage";
 import Navbar from "./components/Navbar";
 
 import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { PopupProvider } from "./context/PopupContext";
+
 
 const App = () => {
   return (
     <AuthProvider>
+      <PopupProvider>
       <Router>
         <div className="App">
           <Navbar />
@@ -27,6 +30,7 @@ const App = () => {
           </Routes>
         </div>
       </Router>
+      </PopupProvider>
     </AuthProvider>
   );
 };

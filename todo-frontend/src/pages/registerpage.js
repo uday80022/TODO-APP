@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { usePopup } from "../context/PopupContext";
 
 import "../styles/registerpage.css";
 
@@ -12,12 +13,18 @@ const RegisterPage = () => {
   const [role, setRole] = useState("user");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { showPopup } = usePopup();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      showPopup({
+        message: "Passwords do not match!",
+        duration: 3000,
+        type: "error",
+      });
+      //  alert("Passwords do not match!");
       return;
     }
     try {
@@ -28,10 +35,20 @@ const RegisterPage = () => {
       });
       console.log(response.data);
       if (response.data.status) {
-        alert("Registration successful!");
+        showPopup({
+          message: "Registration successful!",
+          duration: 3000,
+          type: "success",
+        });
+        // alert("Registration successful!");
         navigate("/login");
       } else {
-        alert("Registration failed. Please try again.");
+        showPopup({
+          message: "Registration failed. Please try again.",
+          duration: 3000,
+          type: "error",
+        });
+        // alert("Registration failed. Please try again.");
       }
     } catch (error) {
       console.error("Error registering:", error);

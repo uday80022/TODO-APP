@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-
+import { usePopup } from "../context/PopupContext";
 import "../styles/loginpage.css";
 
 const LoginPage = () => {
@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
+  const { showPopup } = usePopup();
 
   const navigate = useNavigate();
   const checkLogin = async () => {
@@ -26,10 +27,20 @@ const LoginPage = () => {
           username: response.data.username,
         };
         login(userData);
-        alert("Login successful!");
+        showPopup({
+          message: "Login successful!",
+          duration: 3000,
+          type: "success",
+        });
+        // alert("Login successful!");
         navigate("/home");
       } else {
-        alert("Invalid credentials. Please try again.");
+        showPopup({
+          message: "Invalid credentials. Please try again.",
+          duration: 3000,
+          type: "error",
+        });
+        // alert("Invalid credentials. Please try again.");
       }
     } catch (error) {
       console.error("Error logging in:", error);
@@ -68,7 +79,6 @@ const LoginPage = () => {
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            
               required
             />
             <span
@@ -82,6 +92,9 @@ const LoginPage = () => {
         <button type="submit" className="login-button">
           Login
         </button>
+        <div className="register-link">
+          Don't have an account? <a href="/register">Register here</a>
+        </div>
       </form>
     </div>
   );
