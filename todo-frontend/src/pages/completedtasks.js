@@ -1,8 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import { FaFilter } from "react-icons/fa";
 
 const CompletedTasks = ({ alltodos, setTodos }) => {
-  const todos = alltodos.filter((todo) => !todo.is_deleted && todo.iscompleted);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const todos = alltodos.filter(
+    (todo) =>
+      !todo.is_deleted &&
+      todo.iscompleted &&
+      todo.task.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (priorityFilter === "" || todo.priority === priorityFilter)
+  );
 
   const updateStatus = async (id, iscompleted) => {
     try {
@@ -22,6 +32,42 @@ const CompletedTasks = ({ alltodos, setTodos }) => {
   return (
     <div className="todo-container">
       <h1 className="todo-title">Completed Tasks</h1>
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          className="task-input"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <FaFilter
+          className="filter-icon"
+          onClick={() => setIsFilterVisible(!isFilterVisible)}
+        />
+        {isFilterVisible && (
+          <div className="filter-popup">
+            <div className="filter-popup-content">
+              <h3 className="filter-popup-title">Filter Options</h3>
+              <label className="filter-label">Filter by Priority:</label>
+              <select
+                className="filter-select"
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <button
+                className="filter-close-button"
+                onClick={() => setIsFilterVisible(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       {todos.length === 0 ? (
         <p className="todo-empty-tasks">No completed tasks yet</p>
       ) : (

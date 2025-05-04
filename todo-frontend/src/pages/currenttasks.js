@@ -1,5 +1,7 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
+import { FaFilter } from "react-icons/fa";
+
 import {
   FaPlus,
   FaPencilAlt,
@@ -12,14 +14,22 @@ import { AuthContext } from "../context/AuthContext";
 import { usePopup } from "../context/PopupContext";
 
 const CurrentTasks = ({ alltodos, setTodos }) => {
-  const todos = (alltodos || []).filter(
-    (todo) => !todo.is_deleted && !todo.iscompleted
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState("");
+  let todos = (alltodos || []).filter(
+    (todo) =>
+      !todo.is_deleted &&
+      !todo.iscompleted &&
+      todo.task.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (priorityFilter === "" || todo.priority === priorityFilter)
   );
   const [task, setTask] = useState("");
   const [priority, setPriority] = useState("low");
   const [editingId, setEditingId] = useState(null);
   const [editedTask, setEditedTask] = useState("");
   const [isOrdering, setIsOrdering] = useState(false);
+
   const { user } = useContext(AuthContext);
   const { showPopup } = usePopup();
 
@@ -198,88 +208,130 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
           </button>
         </div>
       </div>
-      {todos.length === 0 ? (
-        <p className="todo-empty-tasks">No active tasks yet</p>
-      ) : (
-        <ul className="task-list adjust-list">
-          {todos
-            .filter((todo) => !todo.is_deleted)
-            .map((todo) => (
-              <li key={todo.id} className="task-item">
-                <input
-                  type="checkbox"
-                  checked={todo.iscompleted}
-                  onChange={() => updateStatus(todo.id, todo.iscompleted)}
-                  className="task-checkbox"
-                />
-                {editingId === todo.id ? (
-                  <div className="task-input-wrapper">
+      <>
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            className="task-input"
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaFilter
+            className="filter-icon"
+            onClick={() => setIsFilterVisible(!isFilterVisible)}
+          />
+          {isFilterVisible && (
+            <div className="filter-popup">
+              <div className="filter-popup-content">
+                <h3 className="filter-popup-title">Filter Options</h3>
+                <label className="filter-label">Filter by Priority:</label>
+                <select
+                  className="filter-select"
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+                <button
+                  className="filter-close-button"
+                  onClick={() => setIsFilterVisible(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        {todos.length === 0 ? (
+          <p className="todo-empty-tasks">No active tasks yet</p>
+        ) : (
+          <>
+            <ul className="task-list adjust-list">
+              {todos
+                .filter((todo) => !todo.is_deleted)
+                .map((todo) => (
+                  <li key={todo.id} className="task-item">
                     <input
-                      className="task-input"
-                      value={editedTask}
-                      // autoFocus
-                      onChange={(e) => setEditedTask(e.target.value)}
-                      onBlur={() => editTask(todo.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") editTask(todo.id);
-                        if (e.key === "Escape") setEditingId(null);
-                      }}
+                      type="checkbox"
+                      checked={todo.iscompleted}
+                      onChange={() => updateStatus(todo.id, todo.iscompleted)}
+                      className="task-checkbox"
                     />
-                    <select
-                      className="priority-dropdown"
-                      onChange={(e) => changePriority(todo.id, e.target.value)}
-                      value={todo.priority || "low"}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setEditingId(null);
-                      }}
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-                ) : (
-                  <>
-                    <span
-                      className={`task-text ${
-                        todo.iscompleted ? "completed" : ""
-                      }`}
-                    >
-                      {todo.task}
-                    </span>
-                    <span className="task-priority">
-                      {todo.priority.charAt(0).toUpperCase() +
-                        todo.priority.slice(1)}
-                    </span>
-                  </>
-                )}
-                {isOrdering ? (
-                  <div className="task-actions">
-                    <FaArrowUp
-                      className="task-icon edit-icon"
-                      onClick={() => updateOrder(todo.id, "up")}
-                    />
-                    <FaArrowDown
-                      className="task-icon delete-icon"
-                      onClick={() => updateOrder(todo.id, "down")}
-                    />
-                  </div>
-                ) : (
-                  <div className="task-actions">
-                    <FaPencilAlt
-                      className="task-icon edit-icon"
-                      onClick={() => startEditing(todo.id, todo.task)}
-                    />
-                    <FaTrashAlt
-                      className="task-icon delete-icon"
-                      onClick={() => deleteTodo(todo.id)}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
-        </ul>
-      )}
+                    {editingId === todo.id ? (
+                      <div className="task-input-wrapper">
+                        <input
+                          className="task-input"
+                          value={editedTask}
+                          // autoFocus
+                          onChange={(e) => setEditedTask(e.target.value)}
+                          onBlur={() => editTask(todo.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") editTask(todo.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                        />
+                        <select
+                          className="priority-dropdown"
+                          onChange={(e) =>
+                            changePriority(todo.id, e.target.value)
+                          }
+                          value={todo.priority || "low"}
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <>
+                        <span
+                          className={`task-text ${
+                            todo.iscompleted ? "completed" : ""
+                          }`}
+                        >
+                          {todo.task}
+                        </span>
+                        <span className="task-priority">
+                          {todo.priority.charAt(0).toUpperCase() +
+                            todo.priority.slice(1)}
+                        </span>
+                      </>
+                    )}
+                    {isOrdering ? (
+                      <div className="task-actions">
+                        <FaArrowUp
+                          className="task-icon edit-icon"
+                          onClick={() => updateOrder(todo.id, "up")}
+                        />
+                        <FaArrowDown
+                          className="task-icon delete-icon"
+                          onClick={() => updateOrder(todo.id, "down")}
+                        />
+                      </div>
+                    ) : (
+                      <div className="task-actions">
+                        <FaPencilAlt
+                          className="task-icon edit-icon"
+                          onClick={() => startEditing(todo.id, todo.task)}
+                        />
+                        <FaTrashAlt
+                          className="task-icon delete-icon"
+                          onClick={() => deleteTodo(todo.id)}
+                        />
+                      </div>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </>
+        )}
+      </>
     </div>
   );
 };
