@@ -28,7 +28,7 @@ const RegisterPage = () => {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:5000/register", {
+      const response = await axios.post("http://https://todo-app-backend-jig8.onrender.com//register", {
         username,
         password,
         role,

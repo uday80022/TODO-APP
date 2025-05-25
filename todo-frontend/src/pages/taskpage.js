@@ -14,7 +14,7 @@ const TaskPage = () => {
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        const response = await axios.post("http://localhost:5000/gettodos/", {
+        const response = await axios.post("http://https://todo-app-backend-jig8.onrender.com//gettodos/", {
           id: user.id,
         });
         setTodos(response.data);

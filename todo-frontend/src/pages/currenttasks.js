@@ -36,7 +36,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
   const addTodo = async () => {
     if (!task) return;
     try {
-      const response = await axios.post("http://localhost:5000/addtodo", {
+      const response = await axios.post("http://https://todo-app-backend-jig8.onrender.com//addtodo", {
         user_id: user.id,
         task,
         priority,
@@ -61,7 +61,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
 
   const updateStatus = async (id, iscompleted) => {
     try {
-      await axios.put(`http://localhost:5000/updatetask/${id}`, {
+      await axios.put(`http://https://todo-app-backend-jig8.onrender.com//updatetask/${id}`, {
         iscompleted: !iscompleted,
       });
       setTodos(
@@ -81,7 +81,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
 
   const changePriority = async (id, priority) => {
     try {
-      await axios.put(`http://localhost:5000/updatetask/${id}`, { priority });
+      await axios.put(`http://https://todo-app-backend-jig8.onrender.com//updatetask/${id}`, { priority });
       setTodos(
         alltodos.map((todo) => (todo.id === id ? { ...todo, priority } : todo))
       );
@@ -93,7 +93,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
   const editTask = async (id) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/updatetask/${id}`,
+        `http://https://todo-app-backend-jig8.onrender.com//updatetask/${id}`,
         {
           editedTask,
         }
@@ -132,7 +132,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
       const swap_sort_id = filteredTodos[swap_index].sort_order;
       const current_sort_id = filteredTodos[currentIndex].sort_order;
 
-      const response = await axios.put(`http://localhost:5000/updateorder`, {
+      const response = await axios.put(`http://https://todo-app-backend-jig8.onrender.com//updateorder`, {
         id,
         user_id: user.id,
         swap_sort_id,
@@ -150,7 +150,7 @@ const CurrentTasks = ({ alltodos, setTodos }) => {
 
   const deleteTodo = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/delete/${id}`);
+      await axios.put(`http://https://todo-app-backend-jig8.onrender.com//delete/${id}`);
       setTodos(
         alltodos.map((todo) => {
           return todo.id === id ? { ...todo, is_deleted: true } : todo;

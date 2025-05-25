@@ -15,7 +15,7 @@ const DeletedTasks = ({ alltodos, setTodos }) => {
 
   const restoreTodo = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/restore/${id}`);
+      await axios.put(`http://https://todo-app-backend-jig8.onrender.com//restore/${id}`);
       setTodos(
         alltodos.map((todo) =>
           todo.id === id ? { ...todo, is_deleted: 0 } : todo

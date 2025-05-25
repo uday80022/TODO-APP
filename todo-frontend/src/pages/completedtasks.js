@@ -16,7 +16,7 @@ const CompletedTasks = ({ alltodos, setTodos }) => {
 
   const updateStatus = async (id, iscompleted) => {
     try {
-      await axios.put(`http://localhost:5000/updatetask/${id}`, {
+      await axios.put(`http://https://todo-app-backend-jig8.onrender.com//updatetask/${id}`, {
         iscompleted: !iscompleted,
       });
       setTodos(
