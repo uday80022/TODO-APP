@@ -4,9 +4,6 @@ npm-debug.log*
 .env
 
 # React (Create React App)
-build/
-dist/
-.cache/
 *.log
 *.lock
 .env.local

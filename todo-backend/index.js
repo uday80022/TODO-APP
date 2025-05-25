@@ -15,20 +15,6 @@ const db = mysql.createConnection({
 app.use(cors());
 app.use(express.json());
 
-app.post("/gettodos", (req, res) => {
-  const { id } = req.body;
-  db.query(
-    "SELECT * FROM todo where user_id = ? order by sort_order",
-    [id],
-    (err, results) => {
-      if (err) {
-        console.error("Error fetching todos:", err);
-        return res.status(500).send(err);
-      }
-      res.json(results);
-    }
-  );
-});
 
 app.post("/edittask", (req, res) => {
   const { id, task } = req.body;
@@ -108,6 +94,8 @@ app.put("/updatetask/:id", (req, res) => {
     return res.status(400).send("Invalid request body");
   }
 });
+
+
 
 app.put("/updateorder", (req, res) => {
   const { id, user_id, swap_sort_id, current_sort_id } = req.body;
