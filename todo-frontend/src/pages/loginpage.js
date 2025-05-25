@@ -16,7 +16,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const checkLogin = async () => {
     try {
-      const response = await axios.post("http://https://todo-app-backend-jig8.onrender.com//login", {
+      const response = await axios.post("https://todo-app-backend-jig8.onrender.com/login", {
         username,
         password,
       });
