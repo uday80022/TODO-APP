@@ -1,224 +1,239 @@
 import express from "express";
-import mysql from "mysql2";
+import pg from "pg";
 import cors from "cors";
 
 const app = express();
 const port = 5000;
 
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "todo_app",
+const db = new pg.Pool({
+  host: "dpg-d0pfv5uuk2gs739jkdfg-a.oregon-postgres.render.com",
+  port: 5432,
+  user: "todo_postgres_server_user",
+  password: "CDFlEgf8Isr8vb23ql8lg4SvvZLmfkVc",
+  database: "todo_postgres_server",
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 app.use(cors());
 app.use(express.json());
+// Assuming you have initialized pg client or pool as 'db'
+// e.g. const { Pool } = require('pg');
+// const db = new Pool({...});
 
-
-app.post("/edittask", (req, res) => {
-  const { id, task } = req.body;
-  db.query(
-    "UPDATE todo SET task = ? WHERE id = ?",
-    [task, id],
-    (err, results) => {
-      if (err) {
-        console.error("Error updating task:", err);
-        return res.status(500).send(err);
-      }
-      res.send({ id, task, success: true });
-    }
-  );
-});
-
-app.post("/addtodo", (req, res) => {
-  const { user_id, task, priority, sort_order } = req.body;
-  db.query(
-    "INSERT INTO todo (task,user_id,priority,sort_order) VALUES (?,?,?,?)",
-    [task, user_id, priority, sort_order],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      const insertId = results.insertId;
-      db.query(
-        "SELECT * FROM todo where user_id = ? order by sort_order",
-        [user_id],
-        (err, results) => {
-          if (err) {
-            return res.send(err);
-          }
-          res.send(results);
-        }
+app.get("/createtables", async (req, res) => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    }
-  );
-});
+    `);
 
-app.put("/updatetask/:id", (req, res) => {
-  const { id } = req.params;
-  if (req.body.iscompleted == false || req.body.iscompleted == true) {
-    db.query(
-      "UPDATE todo SET iscompleted = ? WHERE id = ?",
-      [req.body.iscompleted, id],
-      (err, results) => {
-        if (err) {
-          return res.status(500).send(err);
-        }
-        res.send({ id, iscompleted: req.body.iscompleted });
-      }
-    );
-  } else if (req.body.priority) {
-    db.query(
-      "UPDATE todo SET priority = ? WHERE id = ?",
-      [req.body.priority, id],
-      (err, results) => {
-        if (err) {
-          return res.status(500).send(err);
-        }
-        res.send({ id, priority: req.body.priority });
-      }
-    );
-  } else if (req.body.editedTask) {
-    db.query(
-      "UPDATE todo SET task = ? WHERE id = ?",
-      [req.body.editedTask, id],
-      (err, results) => {
-        if (err) {
-          return res.status(500).send(err);
-        }
-        res.send({ id, task: req.body.editedTask, success: true });
-      }
-    );
-  } else {
-    return res.status(400).send("Invalid request body");
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS todo (
+        id SERIAL PRIMARY KEY,
+        task VARCHAR(255) NOT NULL,
+        iscompleted BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT false,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        priority TEXT CHECK (priority IN ('high', 'medium', 'low')) DEFAULT 'low',
+        sort_order INTEGER DEFAULT 0
+      );
+    `);
+
+    res.send({ success: true, message: "Tables created successfully" });
+  } catch (err) {
+    console.error("Error creating tables:", err);
+    res
+      .status(500)
+      .send({ error: "Failed to create tables", detail: err.message });
   }
 });
 
+app.post("/edittask", async (req, res) => {
+  const { id, task } = req.body;
+  try {
+    await db.query("UPDATE todo SET task = $1 WHERE id = $2", [task, id]);
+    res.send({ id, task, success: true });
+  } catch (err) {
+    console.error("Error updating task:", err);
+    res.status(500).send(err.message);
+  }
+});
 
+app.post("/gettodos/", async (req, res) => {
+  const { id } = req.body;
 
-app.put("/updateorder", (req, res) => {
+  try {
+    const queryText = `
+      SELECT * FROM todo
+      WHERE user_id = $1 AND is_deleted = false
+      ORDER BY sort_order
+    `;
+    const { rows } = await db.query(queryText, [id]);
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching todos:", err);
+    res.status(500).send(err.message);
+  }
+});
+
+app.post("/addtodo", async (req, res) => {
+  const { user_id, task, priority, sort_order } = req.body;
+  try {
+    await db.query(
+      "INSERT INTO todo (task, user_id, priority, sort_order) VALUES ($1, $2, $3, $4)",
+      [task, user_id, priority, sort_order]
+    );
+
+    const result = await db.query(
+      "SELECT * FROM todo WHERE user_id = $1 ORDER BY sort_order",
+      [user_id]
+    );
+
+    res.send(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.put("/updatetask/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (typeof req.body.iscompleted === "boolean") {
+      await db.query("UPDATE todo SET iscompleted = $1 WHERE id = $2", [
+        req.body.iscompleted,
+        id,
+      ]);
+      res.send({ id, iscompleted: req.body.iscompleted });
+    } else if (req.body.priority) {
+      await db.query("UPDATE todo SET priority = $1 WHERE id = $2", [
+        req.body.priority,
+        id,
+      ]);
+      res.send({ id, priority: req.body.priority });
+    } else if (req.body.editedTask) {
+      await db.query("UPDATE todo SET task = $1 WHERE id = $2", [
+        req.body.editedTask,
+        id,
+      ]);
+      res.send({ id, task: req.body.editedTask, success: true });
+    } else {
+      res.status(400).send("Invalid request body");
+    }
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.put("/updateorder", async (req, res) => {
   const { id, user_id, swap_sort_id, current_sort_id } = req.body;
-  db.query(
-    "UPDATE todo SET sort_order = ? WHERE sort_order = ? and user_id = ?",
-    [current_sort_id, swap_sort_id, user_id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      db.query(
-        "UPDATE todo SET sort_order = ? WHERE id = ? and user_id = ?",
-        [swap_sort_id, id, user_id],
-        (err, results) => {
-          if (err) {
-            return res.status(500).send(err);
-          }
-          db.query(
-            "SELECT * FROM todo where user_id = ? order by sort_order",
-            [user_id],
-            (err, results) => {
-              if (err) {
-                return res.send(err);
-              }
-              res.send(results);
-            }
-          );
-        }
-      );
-    }
-  );
+  try {
+    await db.query(
+      "UPDATE todo SET sort_order = $1 WHERE sort_order = $2 AND user_id = $3",
+      [current_sort_id, swap_sort_id, user_id]
+    );
+
+    await db.query(
+      "UPDATE todo SET sort_order = $1 WHERE id = $2 AND user_id = $3",
+      [swap_sort_id, id, user_id]
+    );
+
+    const result = await db.query(
+      "SELECT * FROM todo WHERE user_id = $1 ORDER BY sort_order",
+      [user_id]
+    );
+
+    res.send(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
-app.put("/delete/:id", (req, res) => {
+app.put("/delete/:id", async (req, res) => {
   const { id } = req.params;
-  db.query(
-    "update todo set is_deleted = 1 WHERE id = ?",
-    [id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      res.status(204).send();
-    }
-  );
+  try {
+    await db.query("UPDATE todo SET is_deleted = TRUE WHERE id = $1", [id]);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
-app.put("/restore/:id", (req, res) => {
+app.put("/restore/:id", async (req, res) => {
   const { id } = req.params;
-  db.query(
-    "update todo set is_deleted = 0 WHERE id = ?",
-    [id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      res.status(204).send();
-    }
-  );
+  try {
+    await db.query("UPDATE todo SET is_deleted = FALSE WHERE id = $1", [id]);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
-app.post("/register", (req, res) => {
+app.post("/register", async (req, res) => {
   const { username, password, role } = req.body;
-  db.query(
-    "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-    [username, password, role],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      res.send({ status: true });
-    }
-  );
+  try {
+    await db.query(
+      "INSERT INTO users (username, password, role) VALUES ($1, $2, $3)",
+      [username, password, role]
+    );
+    res.send({ status: true });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  db.query(
-    "SELECT * FROM users WHERE username = ? AND password = ?",
-    [username, password],
-    (err, results) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      if (results.length === 0) {
-        return res.send({ status: false });
-      }
-      if (results.length === 1) {
-        return res.send({
-          status: true,
-          id: results[0].id,
-          username: results[0].username,
-        });
-      }
+  try {
+    const result = await db.query(
+      "SELECT * FROM users WHERE username = $1 AND password = $2",
+      [username, password]
+    );
+
+    if (result.rows.length === 0) {
+      return res.send({ status: false });
     }
-  );
+
+    if (result.rows.length === 1) {
+      const user = result.rows[0];
+      return res.send({
+        status: true,
+        id: user.id,
+        username: user.username,
+      });
+    }
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
 });
 
-app.get("/users", (req, res) => {
-  db.query("SELECT * FROM users", (err, results) => {
-    if (err) {
-      console.error("Error fetching users:", err);
-      return res.status(500).send(err);
-    }
-    res.json(results);
-  });
+app.get("/users", async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM users");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
-app.get("/user/:id", (req, res) => {
-  db.query(
-    "SELECT * FROM users WHERE id = ?",
-    [req.params.id],
-    (err, results) => {
-      if (err) {
-        console.error("Error fetching user:", err);
-        return res.status(500).send(err);
-      }
-      if (results.length === 0) {
-        return res.status(404).send("User not found");
-      }
-      res.json(results[0]);
+app.get("/user/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).send("User not found");
     }
-  );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 app.listen(port, () => {
